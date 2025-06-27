@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos Sensor DHT11</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Datos del Sensor DHT11</h1>
+    
+    <canvas id="grafico" width="800" height="400"></canvas>
+
+    <script>
+        // Variables para almacenar los datos
+        let labels = [];
+        let temperatureData = [];
+        let humidityData = [];
+
+        // Crear el gráfico usando Chart.js
+        const ctx = document.getElementById('grafico').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Temperatura (°C)',
+                        data: temperatureData,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Humedad (%)',
+                        data: humidityData,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Fecha y Hora'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Valor'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Función para actualizar los datos del gráfico
+        function fetchData() {
+            fetch('/get_data')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Datos recibidos:', data);
+
+                    data.forEach(item => {
+                        let timestamp = new Date(item.timestamp).toLocaleString();
+
+                        // Verificamos si ya se incluyó este timestamp para evitar duplicados
+                        if (!labels.includes(timestamp)) {
+                            labels.push(timestamp);
+                            temperatureData.push(item.temperatura);
+                            humidityData.push(item.humedad);
+                        }
+                    });
+
+                    chart.update();
+                })
+                .catch(error => console.error('Error al obtener los datos:', error));
+        }
+
+        // Llamar a fetchData cada 5 segundos para obtener nuevos datos
+        setInterval(fetchData, 5000);
+
+        // Inicializamos con los datos existentes
+        fetchData();
+    </script>
+</body>
+</html>
